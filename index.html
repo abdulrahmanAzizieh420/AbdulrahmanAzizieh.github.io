@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Abdulrahman Azizieh — Portfolio</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --win-gray: #c0c0c0; --win-dark: #808080; --win-darker: #404040;
+      --win-light: #ffffff; --win-blue: #000080; --win-title-text: #ffffff;
+      --win-bg: #008080; --win-border-light: #dfdfdf;
+    }
+    body {
+      background-color: var(--win-bg);
+      font-family: 'MS Sans Serif', 'Arial', sans-serif;
+      font-size: 13px; min-height: 100vh; overflow-x: hidden;
+      cursor: default; user-select: none;
+    }
+    #desktop {
+      min-height: calc(100vh - 40px); padding: 16px;
+      display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px;
+    }
+    .desktop-icon {
+      display: flex; flex-direction: column; align-items: center;
+      width: 72px; cursor: pointer; padding: 4px;
+      border: 2px solid transparent; gap: 4px;
+    }
+    .desktop-icon:hover { border: 2px dotted #fff; background: rgba(0,0,128,0.4); }
+    .icon-emoji { font-size: 28px; line-height: 1; }
+    .desktop-icon span { color: white; font-size: 11px; text-align: center; text-shadow: 1px 1px 1px #000; word-break: break-word; line-height: 1.2; }
+
+    .win-window {
+      position: fixed; background: var(--win-gray);
+      border-top: 2px solid #fff; border-left: 2px solid #fff;
+      border-right: 2px solid var(--win-dark); border-bottom: 2px solid var(--win-dark);
+      box-shadow: 2px 2px 0 var(--win-darker); min-width: 300px;
+      display: none; z-index: 100; resize: both; overflow: hidden;
+    }
+    .win-window.active { display: block; }
+    .win-window.focused { z-index: 200; }
+
+    .win-titlebar {
+      background: var(--win-blue); color: #fff;
+      padding: 3px 4px; display: flex; align-items: center;
+      justify-content: space-between; cursor: move;
+      font-weight: bold; font-size: 12px; letter-spacing: 0.5px;
+    }
+    .win-titlebar .title-left { display: flex; align-items: center; gap: 6px; }
+    .win-btn {
+      background: var(--win-gray); color: #000;
+      border-top: 1px solid #fff; border-left: 1px solid #fff;
+      border-right: 1px solid var(--win-dark); border-bottom: 1px solid var(--win-dark);
+      width: 16px; height: 16px; font-size: 11px; font-weight: bold;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
+    }
+    .win-btn:active { border-top: 1px solid var(--win-dark); border-left: 1px solid var(--win-dark); border-right: 1px solid #fff; border-bottom: 1px solid #fff; }
+    .win-btns { display: flex; gap: 2px; }
+
+    .win-menubar { background: var(--win-gray); border-bottom: 1px solid var(--win-dark); padding: 2px 4px; display: flex; gap: 2px; font-size: 12px; }
+    .win-menubar span { padding: 2px 8px; cursor: pointer; }
+    .win-menubar span:hover { background: var(--win-blue); color: white; }
+
+    .win-content { padding: 12px; overflow: auto; background: var(--win-gray); max-height: 72vh; }
+    .win-inset {
+      background: white;
+      border-top: 1px solid var(--win-darker); border-left: 1px solid var(--win-darker);
+      border-right: 1px solid var(--win-border-light); border-bottom: 1px solid var(--win-border-light);
+      padding: 8px;
+    }
+    .win-statusbar { background: var(--win-gray); border-top: 1px solid var(--win-dark); padding: 2px 6px; font-size: 11px; color: #000; display: flex; gap: 8px; }
+    .status-cell { border-top: 1px solid var(--win-dark); border-left: 1px solid var(--win-dark); border-right: 1px solid #fff; border-bottom: 1px solid #fff; padding: 1px 6px; }
+
+    #taskbar { position: fixed; bottom: 0; left: 0; right: 0; height: 40px; background: var(--win-gray); border-top: 2px solid #fff; display: flex; align-items: center; gap: 4px; padding: 0 4px; z-index: 9999; }
+    #start-btn { background: var(--win-gray); border-top: 2px solid #fff; border-left: 2px solid #fff; border-right: 2px solid var(--win-dark); border-bottom: 2px solid var(--win-dark); padding: 3px 10px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    #start-btn:active { border-top: 2px solid var(--win-dark); border-left: 2px solid var(--win-dark); border-right: 2px solid #fff; border-bottom: 2px solid #fff; }
+    .taskbar-sep { width: 2px; height: 28px; border-left: 1px solid var(--win-dark); border-right: 1px solid #fff; }
+    .taskbar-btn { background: var(--win-gray); border-top: 1px solid #fff; border-left: 1px solid #fff; border-right: 1px solid var(--win-dark); border-bottom: 1px solid var(--win-dark); padding: 3px 10px; font-size: 12px; cursor: pointer; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .taskbar-btn.active-task { border-top: 1px solid var(--win-dark); border-left: 1px solid var(--win-dark); border-right: 1px solid #fff; border-bottom: 1px solid #fff; background: #b0b0b0; }
+    #taskbar-clock { margin-left: auto; background: var(--win-gray); border-top: 1px solid var(--win-dark); border-left: 1px solid var(--win-dark); border-right: 1px solid #fff; border-bottom: 1px solid #fff; padding: 4px 10px; font-size: 12px; }
+
+    #start-menu { position: fixed; bottom: 40px; left: 0; width: 210px; background: var(--win-gray); border-top: 2px solid #fff; border-left: 2px solid #fff; border-right: 2px solid var(--win-dark); border-bottom: 2px solid var(--win-dark); display: none; z-index: 10000; }
+    #start-menu.open { display: flex; }
+    .start-sidebar { width: 28px; background: var(--win-blue); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; }
+    .start-sidebar span { color: white; font-size: 15px; font-weight: bold; writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 2px; }
+    .start-items { flex: 1; padding: 4px 0; }
+    .start-item { padding: 6px 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; }
+    .start-item:hover { background: var(--win-blue); color: white; }
+    .start-sep { border-top: 1px solid var(--win-dark); border-bottom: 1px solid #fff; margin: 4px 0; }
+
+    /* About */
+    .about-avatar { font-size: 64px; text-align: center; padding: 8px 0; }
+    .about-name { font-size: 17px; font-weight: bold; text-align: center; }
+    .about-title-text { text-align: center; color: #444; font-size: 11px; margin-bottom: 8px; }
+    .about-desc { font-size: 12px; line-height: 1.7; }
+
+    /* Skills */
+    .skill-bar-wrapper { margin-bottom: 10px; }
+    .skill-label { font-size: 12px; margin-bottom: 2px; display: flex; justify-content: space-between; }
+    .skill-bar-outer { background: white; border-top: 1px solid var(--win-darker); border-left: 1px solid var(--win-darker); border-right: 1px solid var(--win-border-light); border-bottom: 1px solid var(--win-border-light); height: 16px; }
+    .skill-bar-inner { height: 100%; background: repeating-linear-gradient(90deg, var(--win-blue) 0px, var(--win-blue) 8px, #3030b8 8px, #3030b8 16px); transition: width 1s ease; }
+
+    /* Projects */
+    .project-card { background: white; border-top: 1px solid var(--win-darker); border-left: 1px solid var(--win-darker); border-right: 1px solid var(--win-border-light); border-bottom: 1px solid var(--win-border-light); padding: 8px; margin-bottom: 10px; cursor: pointer; }
+    .project-card:hover { background: #e8e8e8; }
+    .project-card h3 { font-size: 12px; font-weight: bold; margin-bottom: 4px; }
+    .project-card p { font-size: 11px; color: #333; line-height: 1.5; }
+    .project-tags { margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
+    .tag { background: var(--win-blue); color: white; font-size: 10px; padding: 1px 6px; }
+
+    /* Certs */
+    .cert-item { background: white; border-top: 1px solid var(--win-darker); border-left: 1px solid var(--win-darker); border-right: 1px solid var(--win-border-light); border-bottom: 1px solid var(--win-border-light); padding: 8px 10px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px; }
+    .cert-icon { font-size: 22px; flex-shrink: 0; }
+    .cert-name { font-size: 12px; font-weight: bold; }
+    .cert-desc { font-size: 11px; color: #444; margin-top: 2px; line-height: 1.5; }
+    .cert-badge { display: inline-block; background: var(--win-blue); color: white; font-size: 10px; padding: 1px 7px; margin-top: 4px; }
+
+    /* Contact */
+    .contact-field { margin-bottom: 10px; }
+    .contact-field label { display: block; font-size: 12px; margin-bottom: 2px; }
+    .contact-field input, .contact-field textarea { width: 100%; background: white; border-top: 1px solid var(--win-darker); border-left: 1px solid var(--win-darker); border-right: 1px solid var(--win-border-light); border-bottom: 1px solid var(--win-border-light); padding: 3px 5px; font-size: 12px; font-family: inherit; outline: none; }
+    .contact-field textarea { height: 60px; resize: vertical; }
+    .win-submit { background: var(--win-gray); border-top: 2px solid #fff; border-left: 2px solid #fff; border-right: 2px solid var(--win-dark); border-bottom: 2px solid var(--win-dark); padding: 4px 16px; font-size: 12px; cursor: pointer; font-family: inherit; }
+    .win-submit:active { border-top: 2px solid var(--win-dark); border-left: 2px solid var(--win-dark); border-right: 2px solid #fff; border-bottom: 2px solid #fff; }
+
+    /* Alert */
+    #alert-box { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--win-gray); border-top: 2px solid #fff; border-left: 2px solid #fff; border-right: 2px solid var(--win-dark); border-bottom: 2px solid var(--win-dark); min-width: 300px; max-width: 380px; z-index: 99999; }
+    #alert-box.open { display: block; }
+    .alert-content { padding: 16px; font-size: 12px; display: flex; gap: 12px; align-items: flex-start; }
+    .alert-icon { font-size: 28px; }
+    .alert-btns { text-align: center; padding: 0 16px 12px; }
+
+    ::-webkit-scrollbar { width: 16px; height: 16px; }
+    ::-webkit-scrollbar-track { background: var(--win-gray); }
+    ::-webkit-scrollbar-thumb { background: var(--win-gray); border-top: 1px solid #fff; border-left: 1px solid #fff; border-right: 1px solid var(--win-dark); border-bottom: 1px solid var(--win-dark); }
+
+    #boot-screen { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; color: #fff; font-family: 'VT323', monospace; font-size: 18px; }
+    #boot-screen .logo { font-size: 48px; color: #c0c0c0; letter-spacing: 4px; margin-bottom: 24px; text-shadow: 2px 2px 0 #808080; }
+    .boot-bar-outer { width: 300px; height: 20px; border: 2px solid #c0c0c0; margin-top: 16px; }
+    .boot-bar-inner { height: 100%; background: #000080; width: 0%; transition: width 0.2s; }
+    #boot-text { margin-top: 12px; color: #888; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<!-- BOOT SCREEN -->
+<div id="boot-screen">
+  <div class="logo">Windows 95</div>
+  <div style="color:#aaa;font-size:20px;">Abdulrahman Azizieh — Portfolio</div>
+  <div class="boot-bar-outer"><div class="boot-bar-inner" id="boot-bar"></div></div>
+  <div id="boot-text">Loading personal files…</div>
+</div>
+
+<!-- DESKTOP -->
+<div id="desktop">
+  <div class="desktop-icon" onclick="openWindow('about-win')"><div class="icon-emoji">👤</div><span>About Me</span></div>
+  <div class="desktop-icon" onclick="openWindow('skills-win')"><div class="icon-emoji">🛡️</div><span>Skills.exe</span></div>
+  <div class="desktop-icon" onclick="openWindow('projects-win')"><div class="icon-emoji">📁</div><span>Projects</span></div>
+  <div class="desktop-icon" onclick="openWindow('certs-win')"><div class="icon-emoji">🏅</div><span>Certifications</span></div>
+  <div class="desktop-icon" onclick="openWindow('contact-win')"><div class="icon-emoji">📧</div><span>Contact</span></div>
+  <div class="desktop-icon" onclick="openWindow('resume-win')"><div class="icon-emoji">📄</div><span>Resume.txt</span></div>
+  <div class="desktop-icon" onclick="openWindow('recycle-win')"><div class="icon-emoji">🗑️</div><span>Recycle Bin</span></div>
+</div>
+
+<!-- ABOUT -->
+<div class="win-window" id="about-win" style="top:60px;left:80px;width:350px;">
+  <div class="win-titlebar" onmousedown="startDrag(event,'about-win')">
+    <span class="title-left"><span>👤</span> About Me</span>
+    <div class="win-btns"><div class="win-btn" onclick="minimizeWindow('about-win')">_</div><div class="win-btn" onclick="closeWindow('about-win')">✕</div></div>
+  </div>
+  <div class="win-menubar"><span>File</span><span>Edit</span><span>View</span><span>Help</span></div>
+  <div class="win-content">
+    <div class="about-avatar">🧑‍💻</div>
+    <div class="about-name">Abdulrahman Azizieh</div>
+    <div class="about-title-text">Cybersecurity · Networking · Robotics · 3D Printing · Developer</div>
+    <div class="win-inset">
+      <p class="about-desc">
+        👋 Hi! Welcome to my Windows 95-themed portfolio.<br><br>
+        I'm a Computer Engineering student at <strong>Kuwait University</strong> with a deep passion for
+        <strong>Cybersecurity</strong>, networking, robotics, and hardware engineering.
+        I served as <strong>VP of the Kuwait AI &amp; Robotics Society</strong> where I ran
+        workshops and taught cybersecurity to fellow students.<br><br>
+        📍 Based in: Salmiya, Kuwait<br>
+        🎓 BSc Computer Engineering — Kuwait University (2028)<br>
+        🔐 Certs: CCNA · CCNP · Security+ · CISSP · CJCA<br>
+        🤖 Maker: Robotic Hands · Drones · 3D Printed Figures
+      </p>
+    </div>
+  </div>
+  <div class="win-statusbar"><span class="status-cell">1 object(s)</span><span class="status-cell">Ready</span></div>
+</div>
+
+<!-- SKILLS -->
+<div class="win-window" id="skills-win" style="top:60px;left:460px;width:370px;">
+  <div class="win-titlebar" onmousedown="startDrag(event,'skills-win')">
+    <span class="title-left"><span>🛡️</span> Skills.exe</span>
+    <div class="win-btns"><div class="win-btn" onclick="minimizeWindow('skills-win')">_</div><div class="win-btn" onclick="closeWindow('skills-win')">✕</div></div>
+  </div>
+  <div class="win-menubar"><span>File</span><span>View</span></div>
+  <div class="win-content">
+    <p style="font-size:12px;margin-bottom:12px;color:#333;">⚙️ Loading skill matrix…</p>
+    <div class="skill-bar-wrapper"><div class="skill-label"><span>🌐 Networking (CCNA/CCNP)</span><span>90%</span></div><div class="skill-bar-outer"><div class="skill-bar-inner" style="width:0%" data-width="90%"></div></div></div>
+    <div class="skill-bar-wrapper"><div class="skill-label"><span>🔐 Cybersecurity (Security+/CISSP)</span><span>88%</span></div><div class="skill-bar-outer"><div class="skill-bar-inner" style="width:0%" data-width="88%"></div></div></div>
+    <div class="skill-bar-wrapper"><div class="skill-label"><span>🗡️ Penetration Testing</span><span>75%</span></div><div class="skill-bar-outer"><div class="skill-bar-inner" style="width:0%" data-width="75%"></div></div></div>
+    <div class="skill-bar-wrapper"><div class="skill-label"><span>🛡️ Blue Teaming</span><span>78%</span></div><div class="skill-bar-outer"><div class="skill-bar-inner" style="width:0%" data-width="78%"></div></div></div>
+    <div class="skill-bar-wrapper"><div class="skill-label"><span>🤖 Robotics &amp; Hardware</span><span>80%</span></div><div class="skill-bar-outer"><div class="skill-bar-inner" style="width:0%" data-width="80%"></div></div></div>
+    <div class="skill-bar-wrapper"><div class="skill-label"><span>🖨️ 3D Printing / CAD</span><span>82%</span></div><div class="skill-bar-outer"><div class="skill-bar-inner" style="width:0%" data-width="82%"></div></div></div>
+    <div class="skill-bar-wrapper"><div class="skill-label"><span>🐍 Python</span><span>75%</span></div><div class="skill-bar-outer"><div class="skill-bar-inner" style="width:0%" data-width="75%"></div></div></div>
+    <div class="skill-bar-wrapper"><div class="skill-label"><span>⚙️ C / C++</span><span>65%</span></div><div class="skill-bar-outer"><div class="skill-bar-inner" style="width:0%" data-width="65%"></div></div></div>
+    <div class="skill-bar-wrapper"><div class="skill-label"><span>🔧 Linux / Bash</span><span>78%</span></div><div class="skill-bar-outer"><div class="skill-bar-inner" style="width:0%" data-width="78%"></div></div></div>
+  </div>
+  <div class="win-statusbar"><span class="status-cell">9 skills loaded</span></div>
+</div>
+
+<!-- PROJECTS -->
+<div class="win-window" id="projects-win" style="top:300px;left:80px;width:440px;">
+  <div class="win-titlebar" onmousedown="startDrag(event,'projects-win')">
+    <span class="title-left"><span>📁</span> My Projects</span>
+    <div class="win-btns"><div class="win-btn" onclick="minimizeWindow('projects-win')">_</div><div class="win-btn" onclick="closeWindow('projects-win')">✕</div></div>
+  </div>
+  <div class="win-menubar"><span>File</span><span>Edit</span><span>View</span></div>
+  <div class="win-content">
+
+    <div class="project-card" onclick="showAlert('🦾 Robotic Hand', 'Built a fully functional robotic hand using servo motors, Arduino, and 3D-printed parts. The hand mimics human finger movement and can be controlled via a glove sensor or programmed sequences. Used in demonstrations at KARS events.')">
+      <h3>🦾 Robotic Hand</h3>
+      <p>Designed and built a servo-powered robotic hand with 3D-printed joints. Controlled via Arduino and flex sensors — mimics real finger movement.</p>
+      <div class="project-tags"><span class="tag">Arduino</span><span class="tag">Servo Motors</span><span class="tag">3D Printing</span><span class="tag">C++</span></div>
+    </div>
+
+    <div class="project-card" onclick="showAlert('🚁 Drone Build', 'Designed, assembled, and programmed a custom FPV drone from scratch. Handled frame selection, ESC wiring, flight controller configuration (Betaflight), and autonomous hover modes. Also explored GPS-guided waypoint flight.')">
+      <h3>🚁 Custom Drone Build</h3>
+      <p>Built a custom FPV drone from scratch — frame assembly, ESC wiring, Betaflight flight controller tuning, and GPS waypoint navigation.</p>
+      <div class="project-tags"><span class="tag">Drone</span><span class="tag">Betaflight</span><span class="tag">Electronics</span><span class="tag">Python</span></div>
+    </div>
+
+    <div class="project-card" onclick="showAlert('🖨️ 3D Printed Figures', 'Designed and 3D-printed detailed figurines and mechanical parts using Fusion 360 and Blender. Projects include custom miniatures, functional mechanical assemblies, and display models. Skilled in slicing (Cura), supports, and post-processing.')">
+      <h3>🖨️ 3D Printed Figures &amp; Models</h3>
+      <p>Designed detailed figurines and mechanical assemblies in Fusion 360 &amp; Blender, then printed and post-processed for display and functional use.</p>
+      <div class="project-tags"><span class="tag">Fusion 360</span><span class="tag">Blender</span><span class="tag">Cura</span><span class="tag">FDM Printing</span></div>
+    </div>
+
+    <div class="project-card" onclick="showAlert('🛡️ Cybersecurity Workshop — KARS', 'Designed and delivered a hands-on Cybersecurity workshop as VP of the Kuwait AI & Robotics Society. Covered threat modeling, network defense, attack vectors, and live Kali Linux demonstrations for society members.')">
+      <h3>🛡️ Cybersecurity Workshop — KARS</h3>
+      <p>Designed and led a full cybersecurity workshop as VP of Kuwait AI &amp; Robotics Society. Live Kali Linux demos, threat modeling, and defense labs.</p>
+      <div class="project-tags"><span class="tag">Kali Linux</span><span class="tag">Education</span><span class="tag">Pen Testing</span><span class="tag">Networking</span></div>
+    </div>
+
+    <div class="project-card" onclick="showAlert('🌐 Home Network Security Lab', 'Built a personal home lab for practicing network security. Set up VLANs, configured pfSense firewall rules, ran Wireshark packet captures, and tested intrusion detection with Snort — all in a virtualized environment.')">
+      <h3>🌐 Home Network Security Lab</h3>
+      <p>Personal lab with VLANs, pfSense firewall, Wireshark analysis, and Snort IDS — all virtualized for safe security testing and learning.</p>
+      <div class="project-tags"><span class="tag">pfSense</span><span class="tag">Wireshark</span><span class="tag">Snort</span><span class="tag">VirtualBox</span></div>
+    </div>
+
+  </div>
+  <div class="win-statusbar"><span class="status-cell">5 project(s)</span><span class="status-cell">Click a project for details</span></div>
+</div>
+
+<!-- CERTIFICATIONS -->
+<div class="win-window" id="certs-win" style="top:60px;left:200px;width:400px;">
+  <div class="win-titlebar" onmousedown="startDrag(event,'certs-win')">
+    <span class="title-left"><span>🏅</span> Certifications</span>
+    <div class="win-btns"><div class="win-btn" onclick="minimizeWindow('certs-win')">_</div><div class="win-btn" onclick="closeWindow('certs-win')">✕</div></div>
+  </div>
+  <div class="win-menubar"><span>File</span><span>View</span></div>
+  <div class="win-content">
+    <p style="font-size:11px;color:#555;margin-bottom:10px;">🏆 Certifications &amp; Achievements — Double-click any to learn more</p>
+
+    <div class="cert-item" style="cursor:pointer" onclick="showAlert('🌐 CCNA — Cisco Certified Network Associate', 'Validates the ability to install, configure, operate, and troubleshoot medium-size routed and switched networks. Covers networking fundamentals, IP addressing, routing protocols (OSPF, EIGRP), VLANs, and network security basics.')">
+      <div class="cert-icon">🌐</div>
+      <div>
+        <div class="cert-name">CCNA — Cisco Certified Network Associate</div>
+        <div class="cert-desc">Routing, switching, VLANs, OSPF, EIGRP, network fundamentals</div>
+        <span class="cert-badge">Cisco</span>
+      </div>
+    </div>
+
+    <div class="cert-item" style="cursor:pointer" onclick="showAlert('🌐 CCNP — Cisco Certified Network Professional', 'Advanced enterprise networking certification. Covers complex routing/switching, SD-WAN, automation, security, and enterprise network design. Builds on CCNA with professional-level depth.')">
+      <div class="cert-icon">🌐</div>
+      <div>
+        <div class="cert-name">CCNP — Cisco Certified Network Professional</div>
+        <div class="cert-desc">Advanced routing, SD-WAN, enterprise design, network automation</div>
+        <span class="cert-badge">Cisco</span>
+      </div>
+    </div>
+
+    <div class="cert-item" style="cursor:pointer" onclick="showAlert('🔒 CompTIA Security+', 'Globally recognized entry-level cybersecurity certification. Covers network security, threats/vulnerabilities, cryptography, identity management, risk management, and incident response. Vendor-neutral and DoD-approved.')">
+      <div class="cert-icon">🔒</div>
+      <div>
+        <div class="cert-name">CompTIA Security+</div>
+        <div class="cert-desc">Threats, vulnerabilities, cryptography, risk management, incident response</div>
+        <span class="cert-badge">CompTIA</span>
+      </div>
+    </div>
+
+    <div class="cert-item" style="cursor:pointer" onclick="showAlert('🛡️ CISSP — Certified Information Systems Security Professional', 'One of the most prestigious cybersecurity certifications globally. Covers 8 security domains including access control, cryptography, security architecture, operations, and software development security. Awarded by ISC².')">
+      <div class="cert-icon">🛡️</div>
+      <div>
+        <div class="cert-name">CISSP — Certified Information Systems Security Professional</div>
+        <div class="cert-desc">8 security domains — access control, cryptography, security architecture, ops</div>
+        <span class="cert-badge">ISC²</span>
+      </div>
+    </div>
+
+    <div class="cert-item" style="cursor:pointer" onclick="showAlert('☕ CJCA — Certified Junior Cybersecurity Analyst', 'Demonstrates foundational skills in cybersecurity analysis, threat detection, and SOC operations. Covers log analysis, SIEM platforms, blue teaming fundamentals, and security monitoring workflows.')">
+      <div class="cert-icon">🔍</div>
+      <div>
+        <div class="cert-name">CJCA — Certified Junior Cybersecurity Analyst</div>
+        <div class="cert-desc">SOC operations, SIEM, log analysis, blue teaming, threat detection</div>
+        <span class="cert-badge">Cybersecurity</span>
+      </div>
+    </div>
+
+    <div class="cert-item">
+      <div class="cert-icon">🏢</div>
+      <div>
+        <div class="cert-name">VP — Kuwait AI &amp; Robotics Society</div>
+        <div class="cert-desc">Sep 2025 – Feb 2026 · Leadership, Cybersecurity Instructor, Workshop Organizer</div>
+        <span class="cert-badge">KARS</span>
+      </div>
+    </div>
+
+  </div>
+  <div class="win-statusbar"><span class="status-cell">5 certifications</span><span class="status-cell">Click any cert for details</span></div>
+</div>
+
+<!-- CONTACT -->
+<div class="win-window" id="contact-win" style="top:300px;left:550px;width:310px;">
+  <div class="win-titlebar" onmousedown="startDrag(event,'contact-win')">
+    <span class="title-left"><span>📧</span> Contact Me</span>
+    <div class="win-btns"><div class="win-btn" onclick="minimizeWindow('contact-win')">_</div><div class="win-btn" onclick="closeWindow('contact-win')">✕</div></div>
+  </div>
+  <div class="win-menubar"><span>File</span><span>Send</span></div>
+  <div class="win-content">
+    <div class="contact-field"><label>Your Name:</label><input type="text" id="c-name" placeholder="John Doe"/></div>
+    <div class="contact-field"><label>Email Address:</label><input type="email" id="c-email" placeholder="john@example.com"/></div>
+    <div class="contact-field"><label>Message:</label><textarea id="c-msg" placeholder="Hey, I'd love to work with you!"></textarea></div>
+    <button class="win-submit" onclick="sendContact()">📨 Send Message</button>
+    <div style="margin-top:12px;border-top:1px solid #aaa;padding-top:10px;font-size:11px;line-height:2.2;">
+      <div>📧 <a href="mailto:aboodisx532@gmail.com" style="color:var(--win-blue)">aboodisx532@gmail.com</a></div>
+      <div>📍 Salmiya, Kuwait</div>
+      <div style="color:#555;font-size:10px;margin-top:4px;">Open to freelance, internships &amp; collaborations</div>
+    </div>
+  </div>
+</div>
+
+<!-- RESUME -->
+<div class="win-window" id="resume-win" style="top:120px;left:220px;width:400px;">
+  <div class="win-titlebar" onmousedown="startDrag(event,'resume-win')">
+    <span class="title-left"><span>📄</span> Resume.txt — Notepad</span>
+    <div class="win-btns"><div class="win-btn" onclick="minimizeWindow('resume-win')">_</div><div class="win-btn" onclick="closeWindow('resume-win')">✕</div></div>
+  </div>
+  <div class="win-menubar"><span>File</span><span>Edit</span><span>Format</span><span>Help</span></div>
+  <div class="win-content" style="background:white;font-family:monospace;font-size:12px;line-height:1.9;padding:10px;white-space:pre;">====================================
+  Abdulrahman Azizieh — RESUME
+====================================
+
+EDUCATION
+-----------
+BSc Computer Engineering — 2028
+Kuwait University, Kuwait
+
+EXPERIENCE
+-----------
+VP @ Kuwait AI &amp; Robotics Society
+  Sep 2025 – Feb 2026
+  • Administrative leadership &amp; planning
+  • Taught Cybersecurity fundamentals
+  • Designed &amp; ran Cyber Workshop
+
+CERTIFICATIONS
+-----------
+  CCNA   — Cisco Certified Network Associate
+  CCNP   — Cisco Certified Network Professional
+  Sec+   — CompTIA Security+
+  CISSP  — ISC² (Certified Info Sys Security Prof)
+  CJCA   — Certified Junior Cybersecurity Analyst
+
+PROJECTS
+-----------
+  🦾 Robotic Hand (Arduino + 3D Print)
+  🚁 Custom FPV Drone Build
+  🖨️ 3D Printed Figures &amp; Models
+  🛡️ Cybersecurity Workshop (KARS)
+  🌐 Home Network Security Lab
+
+SKILLS
+-----------
+  Networking, Cybersecurity, Pen Testing,
+  Blue Teaming, Robotics, 3D Printing,
+  Python, C, C++, Java, Linux/Bash
+
+CONTACT
+-----------
+  📧 aboodisx532@gmail.com
+  📍 Salmiya, Kuwait
+
+====================================
+  Open to internships &amp; freelance!
+====================================</div>
+</div>
+
+<!-- RECYCLE BIN -->
+<div class="win-window" id="recycle-win" style="top:200px;left:300px;width:280px;">
+  <div class="win-titlebar" onmousedown="startDrag(event,'recycle-win')">
+    <span class="title-left"><span>🗑️</span> Recycle Bin</span>
+    <div class="win-btns"><div class="win-btn" onclick="minimizeWindow('recycle-win')">_</div><div class="win-btn" onclick="closeWindow('recycle-win')">✕</div></div>
+  </div>
+  <div class="win-content" style="text-align:center;padding:24px 12px;">
+    <div style="font-size:40px;margin-bottom:12px;">🗑️</div>
+    <div class="win-inset" style="font-size:12px;">
+      <p>Items in Recycle Bin:</p><br>
+      <p>❌ drone_crash_v1.log</p>
+      <p>❌ first_ctf_attempt.txt</p>
+      <p>❌ bad_3d_print.stl</p>
+      <p>❌ spaghetti_code_v3.py</p>
+      <p>❌ todo_study_for_finals.txt</p>
+      <br><p style="color:#555;font-size:11px;">Every maker has one of these 😄</p>
+    </div>
+  </div>
+  <div class="win-statusbar"><span class="status-cell">5 item(s)</span></div>
+</div>
+
+<!-- ALERT BOX -->
+<div id="alert-box">
+  <div class="win-titlebar">
+    <span class="title-left"><span>ℹ️</span> <span id="alert-title">Info</span></span>
+  </div>
+  <div class="alert-content">
+    <div class="alert-icon">💬</div>
+    <div id="alert-msg" style="font-size:12px;line-height:1.6;"></div>
+  </div>
+  <div class="alert-btns"><button class="win-submit" onclick="closeAlert()">  OK  </button></div>
+</div>
+
+<!-- TASKBAR -->
+<div id="taskbar">
+  <button id="start-btn" onclick="toggleStartMenu()"><span>🪟</span> Start</button>
+  <div class="taskbar-sep"></div>
+  <div id="taskbar-buttons"></div>
+  <div id="taskbar-clock">12:00 PM</div>
+</div>
+
+<!-- START MENU -->
+<div id="start-menu">
+  <div class="start-sidebar"><span>Windows 95</span></div>
+  <div class="start-items">
+    <div class="start-item" onclick="openWindow('about-win');toggleStartMenu()">👤 About Me</div>
+    <div class="start-item" onclick="openWindow('skills-win');toggleStartMenu()">🛡️ Skills</div>
+    <div class="start-item" onclick="openWindow('projects-win');toggleStartMenu()">📁 Projects</div>
+    <div class="start-item" onclick="openWindow('certs-win');toggleStartMenu()">🏅 Certifications</div>
+    <div class="start-item" onclick="openWindow('contact-win');toggleStartMenu()">📧 Contact</div>
+    <div class="start-item" onclick="openWindow('resume-win');toggleStartMenu()">📄 Resume</div>
+    <div class="start-sep"></div>
+    <div class="start-item" onclick="openWindow('recycle-win');toggleStartMenu()">🗑️ Recycle Bin</div>
+    <div class="start-sep"></div>
+    <div class="start-item" onclick="showAlert('Shut Down','Thanks for visiting! Hope to connect soon. — Abdulrahman 👋')">🔴 Shut Down…</div>
+  </div>
+</div>
+
+<script>
+let bootProgress = 0;
+const bootMessages = ["Checking hardware…","Loading BIOS…","Starting Windows…","Loading Abdulrahman's files…","Almost ready…"];
+let msgIdx = 0;
+const bootInterval = setInterval(() => {
+  bootProgress += Math.random() * 22 + 8;
+  if (bootProgress > 100) bootProgress = 100;
+  document.getElementById('boot-bar').style.width = bootProgress + '%';
+  document.getElementById('boot-text').textContent = bootMessages[Math.min(msgIdx++, bootMessages.length-1)];
+  if (bootProgress >= 100) {
+    clearInterval(bootInterval);
+    setTimeout(() => {
+      document.getElementById('boot-screen').style.transition = 'opacity 0.6s';
+      document.getElementById('boot-screen').style.opacity = '0';
+      setTimeout(() => {
+        document.getElementById('boot-screen').style.display = 'none';
+        openWindow('about-win');
+      }, 600);
+    }, 500);
+  }
+}, 280);
+
+function updateClock() {
+  const now = new Date();
+  let h = now.getHours(), m = now.getMinutes();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  document.getElementById('taskbar-clock').textContent = h + ':' + String(m).padStart(2,'0') + ' ' + ampm;
+}
+updateClock(); setInterval(updateClock, 1000);
+
+const windowState = {}, taskbarBtns = {};
+const windowTitles = {
+  'about-win':'👤 About Me','skills-win':'🛡️ Skills','projects-win':'📁 Projects',
+  'certs-win':'🏅 Certifications','contact-win':'📧 Contact','resume-win':'📄 Resume',
+  'recycle-win':'🗑️ Recycle Bin'
+};
+
+function openWindow(id) {
+  const win = document.getElementById(id);
+  win.classList.add('active'); focusWindow(id);
+  if (!taskbarBtns[id]) {
+    const btn = document.createElement('div');
+    btn.className = 'taskbar-btn active-task';
+    btn.textContent = windowTitles[id] || id;
+    btn.onclick = () => toggleTaskbarWindow(id);
+    document.getElementById('taskbar-buttons').appendChild(btn);
+    taskbarBtns[id] = btn;
+  }
+  windowState[id] = 'open';
+  if (id === 'skills-win') setTimeout(animateSkillBars, 100);
+}
+function closeWindow(id) {
+  document.getElementById(id).classList.remove('active');
+  windowState[id] = 'closed';
+  if (taskbarBtns[id]) { taskbarBtns[id].remove(); delete taskbarBtns[id]; }
+}
+function minimizeWindow(id) {
+  document.getElementById(id).classList.remove('active');
+  windowState[id] = 'minimized';
+  if (taskbarBtns[id]) taskbarBtns[id].classList.remove('active-task');
+}
+function focusWindow(id) {
+  document.querySelectorAll('.win-window').forEach(w => w.classList.remove('focused'));
+  document.getElementById(id).classList.add('focused');
+  if (taskbarBtns[id]) {
+    Object.values(taskbarBtns).forEach(b => b.classList.remove('active-task'));
+    taskbarBtns[id].classList.add('active-task');
+  }
+}
+function toggleTaskbarWindow(id) {
+  if (windowState[id] === 'minimized') {
+    document.getElementById(id).classList.add('active');
+    windowState[id] = 'open'; focusWindow(id);
+  } else if (windowState[id] === 'open') { minimizeWindow(id); }
+}
+
+let dragWin = null, dragOffX = 0, dragOffY = 0;
+function startDrag(e, id) {
+  focusWindow(id); dragWin = document.getElementById(id);
+  const rect = dragWin.getBoundingClientRect();
+  dragOffX = e.clientX - rect.left; dragOffY = e.clientY - rect.top;
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', stopDrag);
+}
+function onDrag(e) {
+  if (!dragWin) return;
+  dragWin.style.left = (e.clientX - dragOffX) + 'px';
+  dragWin.style.top  = (e.clientY - dragOffY) + 'px';
+}
+function stopDrag() {
+  dragWin = null;
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+}
+
+function toggleStartMenu() { document.getElementById('start-menu').classList.toggle('open'); }
+document.addEventListener('click', e => {
+  if (!e.target.closest('#start-menu') && !e.target.closest('#start-btn'))
+    document.getElementById('start-menu').classList.remove('open');
+});
+
+function animateSkillBars() {
+  document.querySelectorAll('.skill-bar-inner').forEach(b => b.style.width = b.dataset.width);
+}
+function showAlert(title, msg) {
+  document.getElementById('alert-title').textContent = title;
+  document.getElementById('alert-msg').textContent = msg;
+  document.getElementById('alert-box').classList.add('open');
+}
+function closeAlert() { document.getElementById('alert-box').classList.remove('open'); }
+function sendContact() {
+  const name = document.getElementById('c-name').value.trim();
+  const email = document.getElementById('c-email').value.trim();
+  if (!name || !email) { showAlert('⚠️ Error','Please fill in your name and email.'); return; }
+  showAlert('✅ Sent!','Thanks ' + name + '! Abdulrahman will get back to you soon.');
+  document.getElementById('c-name').value = '';
+  document.getElementById('c-email').value = '';
+  document.getElementById('c-msg').value = '';
+}
+document.querySelectorAll('.win-window').forEach(w => {
+  w.addEventListener('mousedown', () => focusWindow(w.id));
+});
+</script>
+</body>
+</html>
